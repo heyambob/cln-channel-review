@@ -21,6 +21,8 @@ parser.add_argument("--absent-forward", default=-1, type=int, help="review peers
 cmd_args = parser.parse_args()
 config = vars(cmd_args)
 
+ONE_M=1000000000
+
 clncli = [config["cli"]]+list(map((lambda a: "--"+a),config["cli_args"]))
 xdays = config["xdays"]
 
@@ -46,7 +48,7 @@ if config["peer_id"] is None:
   else:
     channel_to_peer = {}
     for p in all_peers:
-      if len(p["channels"]) == 1:
+      if len(p["channels"]) == 1 and "short_channel_id" in p["channels"][0]:
         channel_to_peer[p["channels"][0]["short_channel_id"]]=p
 
     ct=int(time.time())
@@ -95,7 +97,7 @@ progress = len(all_peers)
 for peer in all_peers:
   if len(peer["channels"]) > 1:
     print("listpeers %s has more than 1 channels - how could that be? go investigate"%(peer["id"]))
-  elif len(peer["channels"]) == 1:
+  elif len(peer["channels"]) == 1 and "short_channel_id" in peer["channels"][0]:
     try:
       peerinfo = call_rpc("listnodes",peer["id"])["nodes"][0]
     except:
@@ -122,6 +124,11 @@ for peer in all_peers:
       last_in_forward=0
       last_out_forward=0
       last_ppm=0
+      in_total_forward=0
+      out_total_forward=0
+      in_xdays_forward=0
+      out_xdays_forward=0
+
       ct=int(time.time())
 
       for infw in call_rpc("listforwards","-k","status=settled","in_channel="+peer["channels"][0]["short_channel_id"])["forwards"]:
@@ -129,11 +136,15 @@ for peer in all_peers:
 
         if ct-ts < 86400*xdays:
           num_in_forward_last_xdays += 1
+          in_xdays_forward += int(infw["in_msat"][:-4])
 
+        in_total_forward += int(infw["in_msat"][:-4])
         last_in_forward = max( int(infw.get("resolved_time", 0)), last_in_forward)
 
       for outfw in call_rpc("listforwards","-k","status=settled","out_channel="+peer["channels"][0]["short_channel_id"])["forwards"]:
         ts = int(outfw["resolved_time"])
+        out_total_forward += int(infw["out_msat"][:-4])
+
         ppm = ceil(outfw["fee"]/outfw["out_msatoshi"]*1000000)
         if outfw["fee"] >= 1000:
            #if it's too small forward the fee isn't reliable
@@ -146,6 +157,7 @@ for peer in all_peers:
           num_out_forward_last_xdays += 1
           msat_earn_last_xdays += outfw["fee"]
           ppm_out_last_xdays += [ppm]
+          out_xdays_forward += int(infw["out_msat"][:-4])
 
       colored_alias=colored(peerinfo["alias"],'green' if peer["connected"] else 'red')
       colored_ratio=colored("%.2f"%(ratio),('red' if ratio <= 0.2 else 'yellow' if ratio >= 0.8 else 'green'))
@@ -166,6 +178,7 @@ for peer in all_peers:
       print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/1000000000,channel_balance/1000000000,colored_ratio))
       print("local_fee%s remote_fee(%d,%d)"%(colored_local_fee,remote_fee_base,remote_fee_ppm))
       print("last ppm %s, in forward %s days ago, out forward %s days ago"%(colored_last_ppm, colored_in_forward_days_ago, colored_out_forward_days_ago))
+      print("Msat in/out forwards (%.2f,%.2f) ; %s days ago (%.2f,%.2f)"%(in_total_forward/ONE_M,out_total_forward/ONE_M,xdays,in_xdays_forward/ONE_M,out_xdays_forward/ONE_M))
       print("last %s days num_forward(in %s, out %s)"%(xdays,colored_num_in_forward_xdays,colored_num_out_forward_xdays))
       print("last %d days fee earned %d"%(xdays,msat_earn_last_xdays/1000))
       if len(ppm_out_last_xdays) > 0:
