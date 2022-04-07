@@ -143,7 +143,7 @@ for peer in all_peers:
 
       for outfw in call_rpc("listforwards","-k","status=settled","out_channel="+peer["channels"][0]["short_channel_id"])["forwards"]:
         ts = int(outfw["resolved_time"])
-        out_total_forward += int(infw["out_msat"][:-4])
+        out_total_forward += int(outfw["out_msat"][:-4])
 
         ppm = ceil(outfw["fee"]/outfw["out_msatoshi"]*1000000)
         if outfw["fee"] >= 1000:
@@ -157,7 +157,7 @@ for peer in all_peers:
           num_out_forward_last_xdays += 1
           msat_earn_last_xdays += outfw["fee"]
           ppm_out_last_xdays += [ppm]
-          out_xdays_forward += int(infw["out_msat"][:-4])
+          out_xdays_forward += int(outfw["out_msat"][:-4])
 
       colored_alias=colored(peerinfo["alias"],'green' if peer["connected"] else 'red')
       colored_ratio=colored("%.2f"%(ratio),('red' if ratio <= 0.2 else 'yellow' if ratio >= 0.8 else 'green'))
