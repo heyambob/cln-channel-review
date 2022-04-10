@@ -95,9 +95,13 @@ else:
 
 progress = len(all_peers)
 for peer in all_peers:
-  if len(peer["channels"]) > 1:
-    print("listpeers %s has more than 1 channels - how could that be? go investigate"%(peer["id"]))
-  elif len(peer["channels"]) == 1 and "short_channel_id" in peer["channels"][0]:
+  channel_normal = None
+  for ch in peer["channels"]:
+    if "short_channel_id" in ch and ch["state"] == "CHANNELD_NORMAL":
+      channel_normal = ch
+      break
+
+  if channel_normal is not None:
     try:
       peerinfo = call_rpc("listnodes",peer["id"])["nodes"][0]
     except:
