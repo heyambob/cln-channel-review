@@ -182,12 +182,18 @@ for peer in all_peers:
       colored_num_out_forward_xdays = list(map(num_in_out_format, num_out_forward_last_xdays))
 
       print("%s(%s) - %d out of %d"%(peer["id"],colored_alias,progress,len(all_peers)))
+      print("")
       print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/1000000000,channel_balance/1000000000,colored_ratio))
       print("local_fee%s remote_fee(%d,%d)"%(colored_local_fee,remote_fee_base,remote_fee_ppm))
       print("last ppm %s, in forward %s days ago, out forward %s days ago"%(colored_last_ppm, colored_in_forward_days_ago, colored_out_forward_days_ago))
-      print("Msat in/out forwards (%.2f,%.2f)"%(in_total_forward/ONE_M,out_total_forward/ONE_M))
+
+      color_msat_forwards = lambda x, y: ('blue','white') if x > y else ('white','blue') if x < y else ('blue','blue')
+      format_msat_forwards = lambda x, y: "("+colored("%.3f"%(x/ONE_M),color_msat_forwards(x,y)[0])+","+colored("%.3f"%(y/ONE_M),color_msat_forwards(x,y)[1])+")"
+
+      print("Total Msat in/out forwards %s"%(format_msat_forwards(in_total_forward,out_total_forward)))
       for idx, xday in enumerate(xdays):
-        print("Msat in/out forwards %s days ago (%.2f,%.2f)"%(xday,in_xdays_forward[idx]/ONE_M,out_xdays_forward[idx]/ONE_M))
+        print("")
+        print("Msat in/out forwards %s days ago %s"%(xday,format_msat_forwards(in_xdays_forward[idx],out_xdays_forward[idx])))
         print("last %s days num_forward(in %s, out %s)"%(xday,colored_num_in_forward_xdays[idx],colored_num_out_forward_xdays[idx]))
         print("last %d days fee earned %d"%(xday,msat_earn_last_xdays[idx]/1000))
         if len(ppm_out_last_xdays[idx]) > 0:
@@ -201,6 +207,7 @@ for peer in all_peers:
       peer_fees = np.array(peer_fees)
       pf_pct = list(map(lambda n: (n,np.percentile(peer_fees, n)), [20, 30, 40, 50, 60, 70, 80]))
 
+      print("")
       print("remote peer's ppms distribution: "+ " ".join(map(lambda t: "%d:%s"%(t[0],colored("%d"%(t[1]),'yellow')), pf_pct)))
 
       print("Change PPM to [default=no change;base,pmm;ppm]: ",end='')
