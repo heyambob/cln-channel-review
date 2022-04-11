@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description="c-lightning channel review",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--cli", default="lightning-cli", help="your lightning-cli command")
 parser.add_argument("--cli-args", default=[], nargs='+', help="lightning-cli arguments ommitting --, for example --lightning-dir would be lightning-dir")
-parser.add_argument("--xdays", nargs="*", default=[7,30], type=int,help="last forward in xdays(can be list)")
+parser.add_argument("--xdays", nargs="*", default=[1,7,30], type=int,help="last forward in xdays(can be list)")
 parser.add_argument("--peer-id", help="peer pubkey that you want to review otherwise it will review all your peers")
 parser.add_argument("--recent-forward", help="review peers that forwards from i to j days")
 parser.add_argument("--absent-forward", default=-1, type=int, help="review peers that have no forwards in the last n days")
