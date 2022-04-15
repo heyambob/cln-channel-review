@@ -49,8 +49,9 @@ if config["peer_id"] is None:
     channel_to_peer = {}
 
     for p in all_peers:
-      if len(p["channels"]) == 1 and "short_channel_id" in p["channels"][0]:
-        channel_to_peer[p["channels"][0]["short_channel_id"]]=p
+      for ch in peer["channels"]:
+        if "short_channel_id" in ch:
+          channel_to_peer[ch["short_channel_id"]]=p
 
     ct=int(time.time())
     want_peers= {}
@@ -104,6 +105,8 @@ for peer in all_peers:
   if len(channel_normal) > 0:
     try:
       peerinfo = call_rpc("listnodes",peer["id"])["nodes"][0]
+      if "alias" not in peerinfo:
+        peerinfo["alias"]=peerinfo["nodeid"][:20]
     except:
       peerinfo = {"alias": "node not exist in gossip"}
 
@@ -118,8 +121,8 @@ for peer in all_peers:
             remote_fee_base = channel["base_fee_millisatoshi"]
             remote_fee_ppm = channel["fee_per_millionth"]
 
-        channel_size = peer["channels"][0]["msatoshi_total"]
-        channel_balance = peer["channels"][0]["msatoshi_to_us"]
+        channel_size = chn["msatoshi_total"]
+        channel_balance = chn["msatoshi_to_us"]
         ratio = channel_balance/channel_size
       
         num_in_forward_last_xdays = list(map(lambda d: 0, xdays))
