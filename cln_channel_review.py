@@ -49,7 +49,7 @@ if config["peer_id"] is None:
     channel_to_peer = {}
 
     for p in all_peers:
-      for ch in peer["channels"]:
+      for ch in p["channels"]:
         if "short_channel_id" in ch:
           channel_to_peer[ch["short_channel_id"]]=p
 
