@@ -227,7 +227,7 @@ for peer in all_peers:
             new_base = local_fee_base
             new_ppm = int(line)
 
-          print(call_rpc("setchannelfee",peer["id"],str(new_base),str(new_ppm)))
+          print(call_rpc("setchannelfee",chn["short_channel_id"],str(new_base),str(new_ppm)))
       else:
         print("channel with %s(%s) is not ready - number of channels = %d"%(peerinfo["alias"],peer["id"],len(channels)))
 
