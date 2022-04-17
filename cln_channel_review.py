@@ -173,7 +173,6 @@ for peer in all_peers:
         colored_alias=colored(peerinfo["alias"],'green' if peer["connected"] else 'red')
         colored_ratio=colored("%.2f"%(ratio),('red' if ratio <= 0.2 else 'yellow' if ratio >= 0.8 else 'green'))
         colored_local_fee=colored("(%d,%d)"%(local_fee_base,local_fee_ppm),'magenta')
-        colored_local_fee=colored("(%d,%d)"%(local_fee_base,local_fee_ppm),'magenta')
         colored_last_ppm=colored("%d"%(last_ppm),'green',attrs=["bold"])
 
         in_forward_days_ago=(ct-last_in_forward)/3600/24
