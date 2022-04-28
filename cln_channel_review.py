@@ -184,7 +184,7 @@ for peer in all_peers:
         colored_num_in_forward_xdays = list(map(num_in_out_format, num_in_forward_last_xdays))
         colored_num_out_forward_xdays = list(map(num_in_out_format, num_out_forward_last_xdays))
 
-        print("%s(%s) - %d out of %d"%(peer["id"],colored_alias,progress,len(all_peers)))
+        print("%s(%s) %s - %d out of %d"%(peer["id"],colored_alias,chn["short_channel_id"],progress,len(all_peers)))
         print("")
         print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/1000000000,channel_balance/1000000000,colored_ratio))
         print("local_fee%s remote_fee(%d,%d)"%(colored_local_fee,remote_fee_base,remote_fee_ppm))
