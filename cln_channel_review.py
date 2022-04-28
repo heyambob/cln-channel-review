@@ -18,6 +18,8 @@ parser.add_argument("--xdays", nargs="*", default=[1,7,30], type=int,help="last 
 parser.add_argument("--peer-id", help="peer pubkey that you want to review otherwise it will review all your peers")
 parser.add_argument("--recent-forward", help="review peers that forwards from i to j days")
 parser.add_argument("--absent-forward", default=-1, type=int, help="review peers that have no forwards in the last n days")
+parser.add_argument("--ratio-min", default=0, type=float, help="review peers that have we have liquidity ratio >= x")
+parser.add_argument("--ratio-max", default=1, type=float, help="review peers that have we have liquidity ratio <= y")
 cmd_args = parser.parse_args()
 config = vars(cmd_args)
 
@@ -38,7 +40,7 @@ def peer_s_remote_ppms(peer_id):
 
 mypubkey=call_rpc("getinfo")["id"]
 
-if config["peer_id"] is None:
+if config["recent_forward"] is not None or config["absent_forward"] != -1:
   all_peers = call_rpc("listpeers")["peers"] 
 
   if config["recent_forward"] is None and config["absent_forward"] == -1:
@@ -91,9 +93,10 @@ if config["peer_id"] is None:
       all_peers=list(filter(lambda p: p["id"] not in exclude_peers, want_peers.values()))
     else:
       all_peers=list(filter(lambda p: p["id"] not in want_peers, all_peers))
-      
-else:
+elif config["peer_id"] is not None:
   all_peers = call_rpc("listpeers",config["peer_id"])["peers"]
+else:
+  all_peers = call_rpc("listpeers")["peers"]
 
 progress = len(all_peers)
 for peer in all_peers:
@@ -124,7 +127,10 @@ for peer in all_peers:
         channel_size = chn["msatoshi_total"]
         channel_balance = chn["msatoshi_to_us"]
         ratio = channel_balance/channel_size
-      
+
+        if ratio < config["ratio_min"] or ratio > config["ratio_max"]:
+          continue
+
         num_in_forward_last_xdays = list(map(lambda d: 0, xdays))
         num_out_forward_last_xdays = list(map(lambda d: 0, xdays))
         msat_earn_last_xdays = list(map(lambda d: 0, xdays))
