@@ -192,7 +192,7 @@ for peer in all_peers:
 
         print("%s(%s) %s - %d out of %d"%(peer["id"],colored_alias,chn["short_channel_id"],progress,len(all_peers)))
         print("")
-        print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/1000000000,channel_balance/1000000000,colored_ratio))
+        print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/ONE_M,channel_balance/ONE_M,colored_ratio))
         print("local_fee%s remote_fee(%d,%d)"%(colored_local_fee,remote_fee_base,remote_fee_ppm))
         print("last ppm %s, in forward %s days ago, out forward %s days ago"%(colored_last_ppm, colored_in_forward_days_ago, colored_out_forward_days_ago))
 
