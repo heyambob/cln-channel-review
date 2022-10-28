@@ -102,8 +102,8 @@ progress = len(all_peers)
 for peer in all_peers:
   channel_normal = []
   for ch in peer["channels"]:
-    if "short_channel_id" in ch and ch["state"] == "CHANNELD_NORMAL":
-      channel_normal += [ch]
+#    if "short_channel_id" in ch and ch["state"] == "CHANNELD_NORMAL":
+    channel_normal += [ch]
 
   if len(channel_normal) > 0:
     try:
@@ -114,15 +114,21 @@ for peer in all_peers:
       peerinfo = {"alias": "node not exist in gossip"}
 
     for chn in channel_normal:
-      channels = call_rpc("listchannels",chn["short_channel_id"])["channels"]
-      if len(channels) == 2:
-        for channel in channels:
-          if channel["source"] == mypubkey:
-            local_fee_base = channel["base_fee_millisatoshi"]
-            local_fee_ppm = channel["fee_per_millionth"]
-          else:
-            remote_fee_base = channel["base_fee_millisatoshi"]
-            remote_fee_ppm = channel["fee_per_millionth"]
+        channels = call_rpc("listchannels",chn["short_channel_id"])["channels"]
+        if len(channels) == 2:
+          for channel in channels:
+            if channel["source"] == mypubkey:
+              local_fee_base = channel["base_fee_millisatoshi"]
+              local_fee_ppm = channel["fee_per_millionth"]
+            else:
+              remote_fee_base = channel["base_fee_millisatoshi"]
+              remote_fee_ppm = channel["fee_per_millionth"]
+        else:
+           print("channel with %s(%s) is not ready - number of channels = %d"%(peerinfo["alias"],peer["id"],len(channels)))
+           local_fee_base = -1
+           local_fee_ppm = -1
+           remote_fee_base = -1
+           remote_fee_ppm = -1
 
         channel_size = chn["msatoshi_total"]
         channel_balance = chn["msatoshi_to_us"]
@@ -192,7 +198,7 @@ for peer in all_peers:
 
         print("%s(%s) %s - %d out of %d"%(peer["id"],colored_alias,chn["short_channel_id"],progress,len(all_peers)))
         print("")
-        print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/ONE_M,channel_balance/ONE_M,colored_ratio))
+        print("channel size: %.2fM, to_us %.4fM, ratio %s"%(channel_size/1000000000,channel_balance/1000000000,colored_ratio))
         print("local_fee%s remote_fee(%d,%d)"%(colored_local_fee,remote_fee_base,remote_fee_ppm))
         print("last ppm %s, in forward %s days ago, out forward %s days ago"%(colored_last_ppm, colored_in_forward_days_ago, colored_out_forward_days_ago))
 
@@ -209,32 +215,31 @@ for peer in all_peers:
             print("last %d days ppm min %d, avg %d, median %d, max %d"%(
               xday,min(ppm_out_last_xdays[idx]),mean(ppm_out_last_xdays[idx]),median(ppm_out_last_xdays[idx]),max(ppm_out_last_xdays[idx])))
 
-        peer_fees = peer_s_remote_ppms(peer["id"])
+        if local_fee_base >= 0:
+          peer_fees = peer_s_remote_ppms(peer["id"])
 
-        #print("peer's fees: "+ " ".join(map(str, peer_fees)))
+          #print("peer's fees: "+ " ".join(map(str, peer_fees)))
 
-        peer_fees = np.array(peer_fees)
-        pf_pct = list(map(lambda n: (n,np.percentile(peer_fees, n)), [20, 30, 40, 50, 60, 70, 80]))
+          peer_fees = np.array(peer_fees)
+          pf_pct = list(map(lambda n: (n,np.percentile(peer_fees, n)), [20, 30, 40, 50, 60, 70, 80]))
 
-        print("")
-        print("remote peer's ppms distribution: "+ " ".join(map(lambda t: "%d:%s"%(t[0],colored("%d"%(t[1]),'yellow')), pf_pct)))
+          print("")
+          print("remote peer's ppms distribution: "+ " ".join(map(lambda t: "%d:%s"%(t[0],colored("%d"%(t[1]),'yellow')), pf_pct)))
 
-        print("Change PPM to [default=no change;base,pmm;ppm]: ",end='')
-        sys.stdout.flush()
-        line = sys.stdin.readline()
-        new_ppm = line.rstrip()
-        if new_ppm=="":
-          pass
-        else:
-          try:
-            [new_base,new_ppm]=list(map(int,line.split(",")))
-          except:
-            new_base = local_fee_base
-            new_ppm = int(line)
+          print("Change PPM to [default=no change;base,pmm;ppm]: ",end='')
+          sys.stdout.flush()
+          line = sys.stdin.readline()
+          new_ppm = line.rstrip()
+          if new_ppm=="":
+            pass
+          else:
+            try:
+              [new_base,new_ppm]=list(map(int,line.split(",")))
+            except:
+              new_base = local_fee_base
+              new_ppm = int(line)
 
-          print(call_rpc("setchannelfee",chn["short_channel_id"],str(new_base),str(new_ppm)))
-      else:
-        print("channel with %s(%s) is not ready - number of channels = %d"%(peerinfo["alias"],peer["id"],len(channels)))
+            print(call_rpc("setchannelfee",chn["short_channel_id"],str(new_base),str(new_ppm)))
 
-      print("---")
     progress=progress-1
+    print("---")
